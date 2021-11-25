@@ -1,0 +1,45 @@
+plugins {
+    id 'java'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+}
+
+test {
+    useJUnitPlatform()
+}
+
+task runMaster(type: JavaExec) {
+    group = 'Run' // <-- change the name as per your need
+    classpath sourceSets.main.runtimeClasspath // <-- Don't change this
+    main = "pucrs.Master"
+    args "192.168.1.103,172.28.155.115,172.28.155.115"
+}
+
+task runSlave1(type: JavaExec) {
+    group = 'Run' // <-- change the name as per your need
+    classpath sourceSets.main.runtimeClasspath // <-- Don't change this
+    main = "pucrs.Slave"
+    args "1200"
+}
+
+task runSlave2(type: JavaExec) {
+    group = 'Run' // <-- change the name as per your need
+    classpath sourceSets.main.runtimeClasspath // <-- Don't change this
+    main = "pucrs.Slave"
+    args "1201"
+}
+
+task runSlave3(type: JavaExec) {
+    group = 'Run' // <-- change the name as per your need
+    classpath sourceSets.main.runtimeClasspath // <-- Don't change this
+    main = "pucrs.Slave"
+    args "1202"
+}
