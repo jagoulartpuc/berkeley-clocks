@@ -20,7 +20,7 @@ task runMaster(type: JavaExec) {
     group = 'Run' // <-- change the name as per your need
     classpath sourceSets.main.runtimeClasspath // <-- Don't change this
     main = "pucrs.Master"
-    args "192.168.1.103,172.28.155.115,172.28.155.115"
+    args "192.168.1.103,172.20.131.20,172.20.131.20"
 }
 
 task runSlave1(type: JavaExec) {
