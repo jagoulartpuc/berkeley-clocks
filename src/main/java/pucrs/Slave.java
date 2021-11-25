@@ -12,7 +12,7 @@ public class Slave {
 			Time time = new TimeImpl(LocalTime.now());
 			Registry registry = LocateRegistry.createRegistry(port);
 			registry.rebind(TimeImpl.class.getSimpleName(), time);
-			System.out.printf("Slave iniciado na porta %s%n", port);
+			System.out.printf("Slave started at port %s%n", port);
 		} catch (Exception ex) {
 			System.out.println(ex);
 		}

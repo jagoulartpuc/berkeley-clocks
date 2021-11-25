@@ -27,7 +27,7 @@ public class TimeImpl extends UnicastRemoteObject implements Time {
 		var newNanos = thisNanos - timeAsNanos;
 		newNanos = newNanos * -1 + diffNanos + thisNanos;
 		LocalTime newLocalTime = LocalTime.ofNanoOfDay(newNanos);
-		System.out.println("Time updated: " + DateTimeFormatter.ofPattern("HH:mm:ss").format(newLocalTime));
+		System.out.println("Time updated: " + newLocalTime);
 		this.time = newLocalTime;
 	}
 
