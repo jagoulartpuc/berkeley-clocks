@@ -21,7 +21,6 @@ task runMaster(type: JavaExec) {
     classpath sourceSets.main.runtimeClasspath // <-- Don't change this
     main = "pucrs.Main"
     args "0","3"
-    //args "192.168.1.103,172.20.131.20"
 }
 
 task runSlave1(type: JavaExec) {

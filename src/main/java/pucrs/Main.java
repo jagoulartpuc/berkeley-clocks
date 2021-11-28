@@ -23,10 +23,11 @@ public class Main {
                     .findFirst()
                     .orElseThrow();
 
-            if (id == 0)
+            if (id == 0) {
                 new Master(configuration, totalSlaves, configurations);
-            else
+            } else {
                 new Slave(configuration, configurations);
+            }
 
         } catch (Exception e) {
             log.log(Level.SEVERE, e.getMessage(), e);
