@@ -20,7 +20,7 @@ task runMaster(type: JavaExec) {
     group = 'Run' // <-- change the name as per your need
     classpath sourceSets.main.runtimeClasspath // <-- Don't change this
     main = "pucrs.Main"
-    args "0,3"
+    args "0","3"
     //args "192.168.1.103,172.20.131.20"
 }
 
@@ -28,19 +28,19 @@ task runSlave1(type: JavaExec) {
     group = 'Run' // <-- change the name as per your need
     classpath sourceSets.main.runtimeClasspath // <-- Don't change this
     main = "pucrs.Main"
-    args "1,3"
+    args "1","3"
 }
 
 task runSlave2(type: JavaExec) {
     group = 'Run' // <-- change the name as per your need
     classpath sourceSets.main.runtimeClasspath // <-- Don't change this
     main = "pucrs.Main"
-    args "2,3"
+    args "2","3"
 }
 
 task runSlave3(type: JavaExec) {
     group = 'Run' // <-- change the name as per your need
     classpath sourceSets.main.runtimeClasspath // <-- Don't change this
     main = "pucrs.Main"
-    args "3,3"
+    args "3","3"
 }
