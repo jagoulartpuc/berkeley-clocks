@@ -1,72 +1,106 @@
 package pucrs;
 
-
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.sql.SQLOutput;
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Master {
+    private static final Logger log = Logger.getLogger(Master.class.getName());
+    private final Configuration master;
+    private final int totalSlaves;
+    private final List<Configuration> slavesConfigurations;
+    private final MulticastSender multicastSender;
 
-	public static void main(String[] args) {
-		String[] ips = args[0].split(",");
-		ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-		scheduledExecutorService.scheduleAtFixedRate(berkeleyTask(ips), 1, 5, TimeUnit.SECONDS);
-	}
+    public Master(Configuration master, int totalSlaves, List<Configuration> slavesConfigurations) {
+        this.master = master;
+        this.totalSlaves = totalSlaves;
+        this.slavesConfigurations = slavesConfigurations;
+        this.multicastSender = new MulticastSender("233.0.0.1", 9000);
+//        new pucrs.MulticastReceiver().start();
 
-	public static Runnable berkeleyTask(String[] ips) {
-		return () -> {
-			try {
-				var times = new ArrayList<LocalTime>();
+        ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+        scheduledExecutorService.scheduleAtFixedRate(berkeleyTask(), 1, 15, TimeUnit.SECONDS);
+    }
 
-				LocalTime localTime = LocalTime.now();
-				System.out.println(localTime);
-				times.add(localTime);
-				System.out.println("Time at master: " + localTime);
+    public Runnable berkeleyTask() {
+        return () -> {
+            this.multicastSender.send("1");
+            var times = this.receiveTimes();
 
-				Registry registry1 = LocateRegistry.getRegistry("localhost", 1200);
-				Time time1 = (Time) registry1.lookup(TimeImpl.class.getSimpleName());
-				LocalTime timeAtSlave1 = time1.getTime();
-				times.add(timeAtSlave1);
-				System.out.println("Connected! Time at slave 1: " +timeAtSlave1);
+            var newTimes = Berkeley.calculate(times);
 
-				Registry registry2 = LocateRegistry.getRegistry("localhost", 1201);
-				Time time2 = (Time) registry2.lookup(TimeImpl.class.getSimpleName());
-				LocalTime timeAtSlave2 = time2.getTime();
-				times.add(timeAtSlave2);
-				System.out.println("Connected! Time at slave 2: " +timeAtSlave2);
+            newTimes.forEach(time -> {
+                var slaveToFix = this.slavesConfigurations.stream()
+                        .filter(slave -> slave.getId() == time.getId())
+                        .findFirst()
+                        .orElseThrow();
+                this.sendTimeToSlave(slaveToFix, time.getTime().toString());
+            });
 
-				Registry registry3 = LocateRegistry.getRegistry("localhost", 1202);
-				Time time3 = (Time) registry3.lookup(TimeImpl.class.getSimpleName());
-				LocalTime timeAtSlave3 = time3.getTime();
-				times.add(timeAtSlave3);
-				System.out.println("Connected! Time at slave 3: " + timeAtSlave3);
+//            List<pucrs.Configuration> slavesToFix = this.slavesConfigurations.stream()
+//                    .filter(slave -> times.stream().anyMatch(time -> time.getId() == slave.getId()))
+//                    .collect(Collectors.toList());
+//            slavesToFix.forEach(slave -> {
+//                this.sendTimeToSlave(slave, newTime);
+//            });
+        };
+    }
 
-				var nanoLocal = localTime.toNanoOfDay();
-				var diff1 = timeAtSlave1.toNanoOfDay() - nanoLocal;
-				var diff2 = timeAtSlave2.toNanoOfDay() - nanoLocal;
-				var diff3 = timeAtSlave3.toNanoOfDay() - nanoLocal;
-				var avgDiff = (diff1 + diff2 + diff3) / 3;
+    private List<Configuration> receiveTimes() {
+        ServerSocket server = null;
+        Socket socket = null;
+        List<Configuration> times = new ArrayList<>();
+        try {
+            server = new ServerSocket(this.master.getPort());
+            for (int i = 0; i < this.totalSlaves; i++) {
+                socket = server.accept();
+                var inputStream = socket.getInputStream();
+                var dataInputStream = new DataInputStream(inputStream);
+                var res = dataInputStream.readUTF();
+                System.out.println("MASTER - Received: " + res);
+                var split = res.split("\\|");
 
-				time1.fixTime(localTime, avgDiff);
-				time2.fixTime(localTime, avgDiff);
-				time3.fixTime(localTime, avgDiff);
-				localTime = localTime.plusNanos(avgDiff);
-				System.out.println("Times updated");
+                var id = Integer.parseInt(split[0]);
+                var time = LocalTime.parse(split[1]);
+                var slaveWithDelay = this.slavesConfigurations.stream()
+                        .filter(slave -> slave.getId() == id)
+                        .findFirst()
+                        .orElseThrow();
 
-				System.out.println("Horario Local: " + localTime);
-				System.out.println("Horario Servidor 1: " + time1.getTime());
-				System.out.println("Horario Servidor 2: " + time2.getTime());
-				System.out.println("Horario Servidor 3: " + time3.getTime());
-			} catch (Exception ex) {
-				System.out.println(ex);
-			}
-		};
-	}
+                var slaveTime = new Configuration(id, time, slaveWithDelay.getDelay());
+                times.add(slaveTime);
+            }
+        } catch (Exception e) {
+            log.log(Level.SEVERE, e.getMessage(), e);
+        } finally {
+            Utils.closeSocketConnection(server, socket);
+        }
+        return times;
+    }
 
+    private void sendTimeToSlave(Configuration slave, String time) {
+        Socket socket = null;
+        OutputStream outputStream = null;
+        DataOutputStream dataOutputStream = null;
+        try {
+            socket = new Socket(slave.getHost(), slave.getPort());
+            outputStream = socket.getOutputStream();
+            dataOutputStream = new DataOutputStream(outputStream);
+            dataOutputStream.writeUTF(time);
+            System.out.println("MASTER - Send: " + time);
+            dataOutputStream.flush();
+        } catch (IOException e) {
+            log.log(Level.SEVERE, e.getMessage(), e);
+        } finally {
+            Utils.closeSocketConnection(outputStream, dataOutputStream, socket);
+        }
+    }
 }
