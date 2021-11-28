@@ -10,10 +10,6 @@ public class Main {
     private static final Logger log = Logger.getLogger(Main.class.getName());
 
     public static void main(String[] args) {
-        if (args.length != 2) {
-            System.out.println("java -jar pucrs.Main <process-id> <total-slaves>");
-            return;
-        }
         var id = Integer.parseInt(args[0]);
         var totalSlaves = Integer.parseInt(args[1]);
         Path path = Path.of("src/main/java/config.txt");
