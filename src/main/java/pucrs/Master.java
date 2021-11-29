@@ -24,7 +24,6 @@ public class Master {
         this.totalSlaves = totalSlaves;
         this.slavesConfigurations = slavesConfigurations;
         this.multicastSender = new MulticastSender("233.0.0.1", 9000);
-//        new pucrs.MulticastReceiver().start();
 
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
         scheduledExecutorService.scheduleAtFixedRate(berkeleyTask(), 1, 15, TimeUnit.SECONDS);
@@ -45,12 +44,6 @@ public class Master {
                 this.sendTimeToSlave(slaveToFix, time.getTime().toString());
             });
 
-//            List<pucrs.Configuration> slavesToFix = this.slavesConfigurations.stream()
-//                    .filter(slave -> times.stream().anyMatch(time -> time.getId() == slave.getId()))
-//                    .collect(Collectors.toList());
-//            slavesToFix.forEach(slave -> {
-//                this.sendTimeToSlave(slave, newTime);
-//            });
         };
     }
 

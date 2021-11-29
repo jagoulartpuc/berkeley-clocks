@@ -31,7 +31,6 @@ public class MulticastReceiver extends Thread {
             while (true) {
                 byte[] in = new byte[256];
                 var packet = new DatagramPacket(in, in.length);
-//                this.socket.setSoTimeout(500);
                 this.socket.receive(packet);
                 var received = new String(packet.getData(), 0, packet.getLength());
                 System.out.println("SLAVE [" + this.slave.slave.getId() + "] - Received(Multicast): " + received);

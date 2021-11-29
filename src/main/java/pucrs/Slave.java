@@ -74,10 +74,7 @@ public class Slave {
         }
     }
 
-    protected void fixTime(LocalTime time) {
+    protected void setTime(LocalTime time) {
         this.time = time;
-//        this.time = this.time.isAfter(time) ?
-//                this.time.minusNanos(time.toNanoOfDay()) :
-//                this.time.plusNanos(time.toNanoOfDay());
     }
 }

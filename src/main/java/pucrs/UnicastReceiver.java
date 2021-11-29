@@ -30,7 +30,7 @@ public class UnicastReceiver extends Thread {
                 var res = dataInputStream.readUTF();
                 System.out.println("SLAVE[" + this.slaveConfiguration.getId() + "] - Received(Unicast): " + res);
                 var time = LocalTime.parse(res);
-                this.slave.fixTime(time);
+                this.slave.setTime(time);
             }
         } catch (Exception e) {
             log.log(Level.SEVERE, e.getMessage(), e);
